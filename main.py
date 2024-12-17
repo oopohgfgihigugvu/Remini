@@ -1,6 +1,7 @@
 import os
 import logging
 import threading
+import requests
 from flask import Flask
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
@@ -31,6 +32,7 @@ def run_flask():
     flask_app.run(host="0.0.0.0", port=8000)
 
 def upload_file(file_path):
+    """Upload the file to Catbox."""
     url = "https://catbox.moe/user/api.php"
     data = {"reqtype": "fileupload", "json": "true"}
     
@@ -91,7 +93,7 @@ async def media_handler(_, message: Message) -> None:
                         [
                             InlineKeyboardButton(
                                 "❍ ᴄʀᴇᴀᴛᴇ ʙʏ ˹ ʙᴀʙʏ-ᴍᴜsɪᴄ ™˼𓅂",
-                                url=upload_url,
+                                url="https://t.me/BABY09_WORLD",
                             )
                         ]
                     ]
