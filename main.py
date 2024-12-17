@@ -1,8 +1,6 @@
 import os
 import logging
 import threading
-import asyncio
-import requests
 from flask import Flask
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
@@ -22,6 +20,15 @@ bot = Client(
 
 # Initialize Flask App
 flask_app = Flask(__name__)
+
+@flask_app.route("/")
+def home():
+    """Health check route for Flask."""
+    return "Flask app is running!"
+
+def run_flask():
+    """Run Flask app in a separate thread."""
+    flask_app.run(host="0.0.0.0", port=8000)
 
 def upload_file(file_path):
     url = "https://catbox.moe/user/api.php"
@@ -47,23 +54,17 @@ def upload_file(file_path):
 
 @bot.on_message(filters.command("start"))
 async def start_command(_, message: Message) -> None:
-    """Welcomes the user with instructions."""
+    """Handles /start command."""
     welcome_text = (
         "👋 Welcome to the Media Uploader Bot!\n\n"
-        "With this bot, you can:\n"
-        " • Upload photos: Just send a photo, and I'll upload it to Telegraph!\n"
-        " • Get a quick link: Receive a link immediately after uploading.\n"
+        "Send me a photo or video to upload!"
     )
-
-    keyboard = [
-        [InlineKeyboardButton("Join 👋", url="https://t.me/BABY09_WORLD")]
-    ]
+    keyboard = [[InlineKeyboardButton("Join", url="https://t.me/BABY09_WORLD")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await message.reply_text(welcome_text, reply_markup=reply_markup, disable_web_page_preview=True)
+    await message.reply_text(welcome_text, reply_markup=reply_markup)
 
-
-@bot.on_message((filters.photo | filters.video) & filters.incoming & filters.private)
+@app.on_message((filters.photo | filters.video) & filters.incoming & filters.private)
 async def media_handler(_, message: Message) -> None:
     """Handles incoming photo or video messages by uploading to Catbox.moe."""
     media = message.photo or message.video
@@ -104,23 +105,12 @@ async def media_handler(_, message: Message) -> None:
         await message.reply_text(f"An error occurred: {str(e)}")
 
 
-# Flask route for health check
-@flask_app.route("/")
-def home():
-    return "Bot is running!"
-
-def run_flask():
-    """Run Flask app on port 8000."""
-    flask_app.run(host="0.0.0.0", port=8000)
-
-def run_bot():
-    """Run Pyrogram bot."""
-    bot.run()  # Directly start the bot using bot.run()
-
+# Main entry point
 if __name__ == "__main__":
-    # Run Flask and Pyrogram in separate threads
+    # Start Flask in a separate thread
     flask_thread = threading.Thread(target=run_flask)
+    flask_thread.daemon = True
     flask_thread.start()
 
-    bot_thread = threading.Thread(target=run_bot)
-    bot_thread.start()
+    # Run the bot in the main thread
+    bot.run()
