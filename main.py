@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize Pyrogram Client
-app = Client(
+bot = Client(
     "catbox_uploader",
     bot_token=Config.BOT_TOKEN,
     api_id=Config.API_ID,
@@ -45,7 +45,7 @@ def upload_file(file_path):
     except Exception as e:
         return False, f"Exception occurred: {str(e)}"
 
-@app.on_message(filters.command("start"))
+@bot.on_message(filters.command("start"))
 async def start_command(_, message: Message) -> None:
     """Welcomes the user with instructions."""
     welcome_text = (
@@ -63,7 +63,7 @@ async def start_command(_, message: Message) -> None:
     await message.reply_text(welcome_text, reply_markup=reply_markup, disable_web_page_preview=True)
 
 
-@app.on_message((filters.photo | filters.video) & filters.incoming & filters.private)
+@bot.on_message((filters.photo | filters.video) & filters.incoming & filters.private)
 async def media_handler(_, message: Message) -> None:
     """Handles incoming photo or video messages by uploading to Catbox.moe."""
     media = message.photo or message.video
@@ -115,8 +115,9 @@ def run_flask():
 
 def run_bot():
     """Run Pyrogram bot."""
-    asyncio.set_event_loop(asyncio.new_event_loop())  # Set a new event loop for the thread
-    app.run()
+    asyncio.run(bot.start())  # Use asyncio.run() to properly start the bot
+    bot.idle()  # Keep the bot running
+    asyncio.run(bot.stop())  # Cleanly stop the bot when shutting down
 
 if __name__ == "__main__":
     # Run Flask and Pyrogram in separate threads
