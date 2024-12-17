@@ -55,21 +55,24 @@ async def start_command(_, message: Message) -> None:
 
     await message.reply_text(welcome_text, reply_markup=reply_markup, disable_web_page_preview=True)
 
-@app.on_message(filters.photo & filters.incoming & filters.private)
-async def photo_handler(_, message: Message) -> None:
-    """Handles incoming photo messages by uploading to Catbox.moe."""
-    media = message
-    file_size = media.photo.file_size if media.photo else 0
 
-    if file_size > 200 * 1024 * 1024:
-        return await message.reply_text("Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴘʜᴏᴛᴏ ᴜɴᴅᴇʀ 200MB.")
+@app.on_message((filters.photo | filters.video) & filters.incoming & filters.private)
+async def media_handler(_, message: Message) -> None:
+    """Handles incoming photo or video messages by uploading to Catbox.moe."""
+    media = message.photo or message.video
+    file_size = media.file_size if media else 0
+
+    if file_size > 200 * 1024 * 1024:  # File size limit (200MB)
+        return await message.reply_text("Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴍᴇᴅɪᴀ ғɪʟᴇ ᴜɴᴅᴇʀ 200MB.")
 
     try:
         text = await message.reply("Processing...")
 
-        local_path = await media.download()
+        # Download media
+        local_path = await message.download()
         await text.edit_text("Uploading 100%...")
 
+        # Upload file
         success, upload_url = upload_file(local_path)
 
         if success:
@@ -90,12 +93,9 @@ async def photo_handler(_, message: Message) -> None:
             await text.edit_text("❍ ᴀɴ ᴇʀʀᴏʀ ᴏᴄᴄᴜʀʀᴇᴅ ᴡʜɪʟᴇ ᴜᴘʟᴏᴀᴅɪɴɢ.")
 
         os.remove(local_path)  # Clean up local file
-
     except Exception as e:
-        logger.error(e)
-        await text.edit_text("File upload failed.")
-        if os.path.exists(local_path):
-            os.remove(local_path)  # Clean up if download fails
+        await message.reply_text(f"An error occurred: {str(e)}")
+
 
 if __name__ == "__main__":
     app.run()
