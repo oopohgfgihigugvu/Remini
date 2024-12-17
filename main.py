@@ -1,6 +1,8 @@
 import os
 import logging
+import threading
 import requests
+from flask import Flask
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 from config import Config  # Ensure you have this file for your bot's config
@@ -9,12 +11,16 @@ from config import Config  # Ensure you have this file for your bot's config
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Initialize Pyrogram Client
 app = Client(
     "catbox_uploader",
     bot_token=Config.BOT_TOKEN,
     api_id=Config.API_ID,
     api_hash=Config.API_HASH,
 )
+
+# Initialize Flask App
+flask_app = Flask(__name__)
 
 def upload_file(file_path):
     url = "https://catbox.moe/user/api.php"
@@ -97,5 +103,23 @@ async def media_handler(_, message: Message) -> None:
         await message.reply_text(f"An error occurred: {str(e)}")
 
 
-if __name__ == "__main__":
+# Flask route for health check
+@flask_app.route("/")
+def home():
+    return "Bot is running!"
+
+def run_flask():
+    """Run Flask app on port 8000."""
+    flask_app.run(host="0.0.0.0", port=8000)
+
+def run_bot():
+    """Run Pyrogram bot."""
     app.run()
+
+if __name__ == "__main__":
+    # Run Flask and Pyrogram in separate threads
+    flask_thread = threading.Thread(target=run_flask)
+    flask_thread.start()
+
+    bot_thread = threading.Thread(target=run_bot)
+    bot_thread.start()
