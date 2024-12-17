@@ -115,9 +115,7 @@ def run_flask():
 
 def run_bot():
     """Run Pyrogram bot."""
-    asyncio.run(bot.start())  # Use asyncio.run() to properly start the bot
-    bot.idle()  # Keep the bot running
-    asyncio.run(bot.stop())  # Cleanly stop the bot when shutting down
+    bot.run()  # Directly start the bot using bot.run()
 
 if __name__ == "__main__":
     # Run Flask and Pyrogram in separate threads
