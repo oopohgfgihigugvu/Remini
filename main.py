@@ -1,6 +1,7 @@
 import os
 import logging
 import threading
+import asyncio
 import requests
 from flask import Flask
 from pyrogram import Client, filters
@@ -114,6 +115,7 @@ def run_flask():
 
 def run_bot():
     """Run Pyrogram bot."""
+    asyncio.set_event_loop(asyncio.new_event_loop())  # Set a new event loop for the thread
     app.run()
 
 if __name__ == "__main__":
