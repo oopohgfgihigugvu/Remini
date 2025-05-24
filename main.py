@@ -6,17 +6,12 @@ from PIL import Image, ImageDraw, ImageFont, ImageColor, ImageFilter
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, CallbackQuery, InputMediaPhoto
 from config import Config
-from buttons import get_adjustment_keyboard  # Importing the function from button.py
+from buttons import get_adjustment_keyboard  
 from flask import Flask
 
-# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# User data store
 user_data_store = {}
-
-# Adjust font size dynamically
 def get_dynamic_font(image, text, max_width, max_height, font_path):
     draw = ImageDraw.Draw(image)
     font_size = 100
@@ -27,69 +22,43 @@ def get_dynamic_font(image, text, max_width, max_height, font_path):
             return font
         font_size -= 5
     return font
-
-# Apply Blur Effect to the Background Image Only (no blur on text)
 async def apply_blur(photo_path, blur_intensity):
     try:
         image = Image.open(photo_path).convert("RGBA")
-        
-        # Create a blurred version of the background
         blurred_image = image.filter(ImageFilter.GaussianBlur(radius=blur_intensity))
-
-        # Save the blurred image temporarily
         with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
             blurred_image.save(temp_file, "PNG")
             return temp_file.name
     except Exception as e:
         logger.error(f"Error applying blur: {e}")
         return None
-
-# Add text to image with adjustments and color (This ensures text is on top of the image, no blur)
 async def add_text_to_image(photo_path, text, output_path, font_path, text_position, size_multiplier, text_color):
     try:
         user_image = Image.open(photo_path).convert("RGBA")
         max_width, max_height = user_image.size
-
-        # Adjust font size based on size_multiplier
         font = get_dynamic_font(user_image, text, max_width, max_height, font_path)
         font = ImageFont.truetype(font_path, int(font.size * size_multiplier))
-        
         draw = ImageDraw.Draw(user_image)
         text_width, text_height = draw.textsize(text, font=font)
-        
-        # Apply position adjustments
         x = text_position[0]
         y = text_position[1]
-
-        # Outline effect in white (shadow effect)
         outline_width = 3
         for dx in [-outline_width, outline_width]:
             for dy in [-outline_width, outline_width]:
                 draw.text((x + dx, y + dy), text, font=font, fill="white")
-
-        # Apply main text color
         draw.text((x, y), text, font=font, fill=text_color)
-
-        # Save the image with text (this should be added after blur is applied to keep text sharp)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
             output_path = temp_file.name
-            user_image.save(output_path, "PNG")
-        
+            user_image.save(output_path, "PNG")     
         return output_path
     except Exception as e:
         logger.error(f"Error adding text to image: {e}")
         return None
-
-# Save user data
 async def save_user_data(user_id, data):
     user_data_store[user_id] = data
     logger.info(f"User {user_id} data saved: {data}")
-
-# Get user data
 async def get_user_data(user_id):
     return user_data_store.get(user_id, None)
-
-# Initialize the Pyrogram Client
 session_name = "logo_creator_bot"
 app = Client(
     session_name,
@@ -98,7 +67,6 @@ app = Client(
     api_hash=Config.API_HASH,
     workdir=os.getcwd()
 )
-
 @app.on_message(filters.command("start"))
 async def start_command(_, message: Message) -> None:
     welcome_text = (
@@ -107,7 +75,6 @@ async def start_command(_, message: Message) -> None:
     )
     keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Join 👋", url="https://t.me/BABY09_WORLD")]])
     await message.reply_text(welcome_text, reply_markup=keyboard, disable_web_page_preview=True)
-
 @app.on_message(filters.photo & filters.private)
 async def photo_handler(_, message: Message) -> None:
     media = message
@@ -123,52 +90,38 @@ async def photo_handler(_, message: Message) -> None:
     except Exception as e:
         logger.error(e)
         await text.edit_text("❖ ғɪʟᴇ ᴘʀᴏᴄᴇssɪɴɢ ғᴀɪʟᴇᴅ.")
-
 @app.on_message(filters.text & filters.private)
 async def text_handler(_, message: Message) -> None:
     user_id = message.from_user.id
     user_data = await get_user_data(user_id)
-
     if not user_data:
         await message.reply_text("❖ ғɪʀsᴛ sᴇɴᴅ ᴍᴇ ᴀ ᴘʜᴏᴛᴏ ғᴏʀ ʟᴏɢᴏ ʙᴀᴄᴋɢʀᴏɴᴜɴᴅ.")
-        return
-    
+        return  
     if user_data['text']:
         await message.reply_text("❖ ʏᴏᴜ ʜᴀᴠᴇ ᴀʟʀᴇᴀᴅʏ ᴇɴᴛᴇʀᴇᴅ ᴛᴇxᴛ!")
-        return
-    
+        return    
     user_text = message.text.strip()
     if not user_text:
         await message.reply_text("❖ ᴘʟᴇᴀsᴇ ᴇɴᴛᴇʀ ᴛᴇxᴛ.")
         return
-    
     user_data['text'] = user_text
     font_path = user_data.get("font", "fonts/Deadly Advance.ttf")
     text_color = ImageColor.getrgb(user_data['text_color'])
-    
-    # Apply blur if needed
     output_path = user_data['photo_path']
     if user_data['blur_intensity'] > 0:
         blurred_image_path = await apply_blur(user_data['photo_path'], user_data['blur_intensity'])
         if blurred_image_path:
             output_path = blurred_image_path
-
-    # Now add text to the blurred image (if blurred) or original image
     output_path = await add_text_to_image(output_path, user_text, None, font_path, user_data['text_position'], user_data['size_multiplier'], text_color)
-
     await message.reply_photo(output_path, caption="❖ ʏᴏᴜʀ ʟᴏɢᴏ ᴄʜᴀɴɪɴɢ....!", reply_markup=get_adjustment_keyboard(output_path))
     await message.delete()
-
 @app.on_callback_query()
 async def callback_handler(_, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
     user_data = await get_user_data(user_id)
-
     if not user_data or not user_data.get("photo_path"):
         await callback_query.answer("Please upload a photo first.", show_alert=True)
         return
-
-    # Handle text adjustments
     if callback_query.data == "move_left":
         user_data['text_position'] = (user_data['text_position'][0] - 30, user_data['text_position'][1])
     elif callback_query.data == "move_right":
@@ -195,8 +148,6 @@ async def callback_handler(_, callback_query: CallbackQuery):
         user_data['text_color'] = "orange"
     elif callback_query.data == "color_purple":
         user_data['text_color'] = "purple"
-
-    # Font selection logic
     if callback_query.data == "font_deadly_advance_italic":
         user_data['font'] = "fonts/UTTAM4.otf"
     elif callback_query.data == "font_deadly_advance":
@@ -207,58 +158,37 @@ async def callback_handler(_, callback_query: CallbackQuery):
         user_data['font'] = "fonts/UTTAM3.otf"
     elif callback_query.data == "font_lobster":
         user_data['font'] = "fonts/FIGHTBACK.ttf"
-
-    # Adjust blur intensity
     if callback_query.data == "blur_plus":
         user_data['blur_intensity'] = min(user_data['blur_intensity'] + 2, 10)  # Max blur intensity of 10
     elif callback_query.data == "blur_minus":
         user_data['blur_intensity'] = max(user_data['blur_intensity'] - 2, 0)  # Min blur intensity of 0
-
     await save_user_data(user_id, user_data)
-
-    # Regenerate the logo with the new adjustments
     font_path = user_data.get("font", "fonts/Deadly Advance.ttf")
-    text_color = ImageColor.getrgb(user_data['text_color'])
-    
+    text_color = ImageColor.getrgb(user_data['text_color'])   
     output_path = user_data['photo_path']
     if user_data['blur_intensity'] > 0:
         blurred_image_path = await apply_blur(user_data['photo_path'], user_data['blur_intensity'])
         if blurred_image_path:
             output_path = blurred_image_path
-
-    # Now add text to the blurred image (if blurred) or original image
     output_path = await add_text_to_image(output_path, user_data['text'], None, font_path, user_data['text_position'], user_data['size_multiplier'], text_color)
-
     await callback_query.message.edit_media(InputMediaPhoto(output_path), reply_markup=get_adjustment_keyboard(output_path))
     await callback_query.answer()
-
-    # Handle the download button callback
     if callback_query.data == "download_logo":
         await callback_query.answer("Downloading your logo...")
         with open(output_path, "rb") as file:
             await callback_query.message.reply_document(file, caption="【 ᴅᴏᴡɴʟᴏᴀᴅᴇᴅ 】")
         await callback_query.message.edit_reply_markup(reply_markup=None)
 
-# Flask app to listen on port 8000
 app_flask = Flask(__name__)
-
 @app_flask.route("/", methods=["GET", "POST"])
 def index():
     return "Bot is running."
-
-# Run Flask server and the Pyrogram bot concurrently
 def start_flask():
     app_flask.run(host="0.0.0.0", port=8000, threaded=True)
-
 def start_bot():
     app.run()
-
 if __name__ == "__main__":
-    # Run Flask in a separate thread to handle web requests
     flask_thread = threading.Thread(target=start_flask)
-    flask_thread.daemon = True  # Ensures that the thread will exit when the main program exits
+    flask_thread.daemon = True
     flask_thread.start()
-
-    # Run the Pyrogram bot
     start_bot()
-    
