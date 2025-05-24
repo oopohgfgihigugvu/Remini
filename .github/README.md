@@ -1,5 +1,5 @@
 <details>
-<summary><b>**𝓕𝓔𝓐𝓣𝓤𝓡𝓔𝓢**</b></summary>
+<summary><b>𝓕𝓔𝓐𝓣𝓤𝓡𝓔𝓢</b></summary>
 <br>
 
 - Add Stylish text
