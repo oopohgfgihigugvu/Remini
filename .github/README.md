@@ -1,20 +1,14 @@
 <details>
-<summary><b>Fᴇᴀᴛᴜʀᴇs</b></summary>
+<summary><b>**𝓕𝓔𝓐𝓣𝓤𝓡𝓔𝓢**</b></summary>
 <br>
 
-- Thumbnail Support
-- Audio And Video
-- Gban User
-- Showing track names when skipping
-- Youtube, Local playback support
-- Settings panel
-- Control with buttons
-- Userbot auto join
-- Channel Music Play
-- Keyboard selection support for youtube play
-- Lyrics Scrapper
-- Unlimited Queue
-- Broadcast Bot
-- Statistic Collector
-- Block / Unblock (restrict user for using your bot)
+- Add Stylish text
+- Ajestment text Size, Colour, Position
+- Change text stylish
+- Background Blur ajestment
+- Save png
+- Background Remove
+- Upscale image quility
+- Remini ajestment
+# 𝕊𝕆𝕆ℕ 𝕄𝕆ℝ𝔼 𝔽𝔼𝔸𝕋𝕌ℝ𝔼𝕊
 </details>
