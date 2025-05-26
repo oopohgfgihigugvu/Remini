@@ -1,5 +1,5 @@
 <h1 align="center"><b>𝐓ᴇᴀᴍ 𝐏ᴜʀᴠɪ 𝐁ᴏᴛs</b></h1>
-<p align="center"><a href="https://ll_ALPHA_BABY_lll"><img src="https://files.catbox.moe/u0b049.jpg" width="4020"></a></p>
+<p align="center"><a href="https://ll_ALPHA_BABY_lll"><img src="https://files.catbox.moe/u0b049.jpg" width="800"></a></p>
 <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif">
 
 
